@@ -279,3 +279,6 @@ __pycache__/
 **/luban-test/
 tests/**/test-out/
 !/tests/golden/core/bin
+
+#codegraph
+.codegraph/
