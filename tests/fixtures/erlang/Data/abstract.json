@@ -1,4 +1,4 @@
 [
-  { "id": 1, "$type": "Normal", "num": 10, "shape": { "$type": "Circle", "id": 5, "time": { "startTime": 100, "endTime": 200 } } },
+  { "id": 1, "$type": "Normal", "num": 10, "shape": { "$type": "Circle", "id": 5, "time": { "startTime": 100, "endTime": 200 } }, "extra": { "startTime": 300, "endTime": 400 } },
   { "id": 2, "$type": "Equipment", "value": 99 }
 ]

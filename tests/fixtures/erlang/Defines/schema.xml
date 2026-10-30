@@ -19,6 +19,7 @@
         <bean name="Normal">
             <var name="num" type="int"/>
             <var name="shape" type="Shape"/>
+            <var name="extra" type="Range"/>
         </bean>
         <bean name="Equipment">
             <var name="value" type="int"/>

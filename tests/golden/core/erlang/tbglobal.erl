@@ -9,4 +9,4 @@
 
 -export([get/0]).
 
-get() -> #tbglobal{version = 3, title = <<"demo"/utf8>>}.
+get() -> {tbglobal, 3, <<"demo"/utf8>>}.

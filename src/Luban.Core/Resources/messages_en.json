@@ -16,6 +16,7 @@
 
   "error.env.option_not_exists": "option '{0}' not exists",
   "error.env.invalid_bool_option": "invalid bool option value:{0}",
+  "error.erlang.invalid_record_format": "invalid erlang.recordFormat value '{1}' for {0}, valid values: formatted_record, online_record, online_tuple",
 
   "error.internal.unexpected": "unexpected error",
   "error.internal.not_possible": "not possible",

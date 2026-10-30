@@ -12,7 +12,7 @@
 get({1, 1}) -> #tbscore{uid = 1, stage = 1, score = 100};
 get({1, 2}) -> #tbscore{uid = 1, stage = 2, score = 200};
 get({2, 1}) -> #tbscore{uid = 2, stage = 1, score = 150};
-get(_) -> undefined.
+get(_) -> none.
 
 all() ->
     [{1, 1}, {1, 2}, {2, 1}].
