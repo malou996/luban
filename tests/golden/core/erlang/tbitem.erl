@@ -14,5 +14,4 @@ get(2) -> #tbitem{id = 2, name = <<"shield"/utf8>>, quality = 2, tags = [<<"armo
 get(_) -> undefined.
 
 all() ->
-    [#tbitem{id = 1, name = <<"sword"/utf8>>, quality = 1, tags = [<<"weapon"/utf8>>, <<"melee"/utf8>>], attrs = #{<<"atk"/utf8>> => 10, <<"def"/utf8>> => 2}, flags = [1, 2], shape = #{'__type__' => circle, id => 10, radius => 1.5}},
-     #tbitem{id = 2, name = <<"shield"/utf8>>, quality = 2, tags = [<<"armor"/utf8>>], attrs = #{<<"def"/utf8>> => 20}, flags = [3], shape = #{'__type__' => rect, id => 11, width => 2.0, height => 3.0}}].
+    [1, 2].

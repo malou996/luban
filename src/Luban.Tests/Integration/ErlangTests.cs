@@ -56,9 +56,11 @@ public class ErlangTests
 Item = tbitem:get(1),
 {tbitem, 1, <<"sword"/utf8>>, 1, _, _, _, #{'__type__' := circle, id := 10, radius := 1.5}} = Item,
 undefined = tbitem:get(99),
-2 = length(tbitem:all()),
+[1, 2] = lists:sort(tbitem:all()),
 {tbglobal, 3, <<"demo"/utf8>>} = tbglobal:get(),
-[{tbscore, 1, 1, 100} | _] = tbscore:all(),
+{tbscore, 1, 1, 100} = tbscore:get({1, 1}),
+undefined = tbscore:get({9, 9}),
+[{1, 1}, {1, 2}, {2, 1}] = lists:sort(tbscore:all()),
 io:format("erlang check OK~n"),
 halt(0).
 """;
@@ -109,7 +111,7 @@ halt(0).
 {normal, 1, 10, #{'__type__' := circle, id := 5, time := {range, 100, 200}}} = tbabstract:get(1),
 {equipment, 2, 99} = tbabstract:get(2),
 undefined = tbabstract:get(3),
-2 = length(tbabstract:all()),
+[1, 2] = lists:sort(tbabstract:all()),
 io:format("erlang abstract check OK~n"),
 halt(0).
 """;

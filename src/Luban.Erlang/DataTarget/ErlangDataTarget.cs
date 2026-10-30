@@ -29,8 +29,8 @@ namespace Luban.Erlang.DataTarget;
 
 /// <summary>
 /// 每张表导出一个 Erlang 源文件。
-/// map 表：get/1 按主键返回 record，all/0 返回全部记录；
-/// list 表：all/0 返回全部记录；
+/// map 表：get/1 按主键返回 record，all/0 返回全部主键；
+/// list 表：有唯一索引时 get/1 按索引返回 record（多字段索引为 tuple），all/0 返回全部索引；无索引时 all/0 返回全部记录；
 /// 单例表：get/0 返回唯一记录。
 /// record 定义在同名 .hrl 头文件中（由 erlang-record code target 生成）。
 /// </summary>
@@ -62,12 +62,11 @@ public class ErlangDataTarget : DataTargetBase
                 var visitor = new ToErlangLiteralVisitor();
                 foreach (Record r in records)
                 {
-                    string keyStr = r.Data.GetField(table.Index).Apply(visitor);
-                    sb.AppendLine($"get({keyStr}) -> {visitor.ApplyTopRecord(r.Data, recordName)};");
+                    sb.AppendLine($"get({FormatIndexKey(r, table, visitor)}) -> {visitor.ApplyTopRecord(r.Data, recordName)};");
                 }
                 sb.AppendLine("get(_) -> undefined.");
                 sb.AppendLine();
-                AppendAll(sb, records, recordName);
+                AppendAllKeys(sb, records, table);
                 break;
             }
             case TableMode.ONE:
@@ -80,9 +79,23 @@ public class ErlangDataTarget : DataTargetBase
             }
             case TableMode.LIST:
             {
-                sb.AppendLine("-export([all/0]).");
+                if (table.IndexList.Count == 0)
+                {
+                    sb.AppendLine("-export([all/0]).");
+                    sb.AppendLine();
+                    AppendAllRecords(sb, records, recordName);
+                    break;
+                }
+                sb.AppendLine("-export([get/1, all/0]).");
                 sb.AppendLine();
-                AppendAll(sb, records, recordName);
+                var visitor = new ToErlangLiteralVisitor();
+                foreach (Record r in records)
+                {
+                    sb.AppendLine($"get({FormatIndexKey(r, table, visitor)}) -> {visitor.ApplyTopRecord(r.Data, recordName)};");
+                }
+                sb.AppendLine("get(_) -> undefined.");
+                sb.AppendLine();
+                AppendAllKeys(sb, records, table);
                 break;
             }
             default:
@@ -92,7 +105,21 @@ public class ErlangDataTarget : DataTargetBase
         return CreateOutputFile($"{moduleName}.{OutputFileExt}", sb.ToString());
     }
 
-    private static void AppendAll(StringBuilder sb, List<Record> records, string recordName)
+    private static string FormatIndexKey(Record record, DefTable table, ToErlangLiteralVisitor visitor)
+    {
+        var keyValues = table.IndexList.Select(idx => record.Data.Fields[idx.IndexFieldIdIndex].Apply(visitor));
+        return keyValues.Count() == 1 ? keyValues.First() : $"{{{string.Join(", ", keyValues)}}}";
+    }
+
+    private static void AppendAllKeys(StringBuilder sb, List<Record> records, DefTable table)
+    {
+        var visitor = new ToErlangLiteralVisitor();
+        var keys = records.Select(r => FormatIndexKey(r, table, visitor));
+        sb.AppendLine("all() ->");
+        sb.AppendLine($"    [{string.Join(", ", keys)}].");
+    }
+
+    private static void AppendAllRecords(StringBuilder sb, List<Record> records, string recordName)
     {
         sb.AppendLine("all() ->");
         var visitor = new ToErlangLiteralVisitor();
