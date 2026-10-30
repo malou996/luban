@@ -16,6 +16,7 @@ public class DataTargetGoldenTests
         yield return new object[] { "xml" };
         yield return new object[] { "yaml" };
         yield return new object[] { "lua" };
+        yield return new object[] { "erlang" };
         yield return new object[] { "bin" };
         yield return new object[] { "bin-offset" };
         yield return new object[] { "bson" };

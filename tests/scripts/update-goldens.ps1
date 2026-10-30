@@ -34,6 +34,12 @@ foreach ($t in $coreTargets) {
     Invoke-Gen "core" @($t) "core/$t"
 }
 
+# erlang: 每表一个 .erl 数据模块与 .hrl record 头文件
+Invoke-Gen "core" @("erlang") "core/erlang" @(
+    "-c", "erlang-record",
+    "-x", "outputCodeDir=$(Join-Path $golden 'core\erlang-record')"
+)
+
 $texts = Join-Path $fixtures "l10n\Data\texts.json"
 Invoke-Gen "l10n" @("json","text-list") "l10n/default" @(
     "-x", "l10n.provider=default",

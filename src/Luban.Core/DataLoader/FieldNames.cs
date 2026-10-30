@@ -34,6 +34,8 @@ public static class FieldNames
 
     public const string LuaTypeNameKey = "_type_";
 
+    public const string ErlangTypeNameKey = "__type__";
+
     public const string ExcelTypeNameKey = "$type";
     public const string ExcelValueNameKey = "$value";
 

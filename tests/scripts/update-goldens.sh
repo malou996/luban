@@ -27,6 +27,11 @@ for t in json json2 xml yaml lua bin bin-offset bson msgpack \
   gen core "core/$t" -d "$t"
 done
 
+# erlang: 每表一个 .erl 数据模块与 .hrl record 头文件
+gen core "core/erlang" -d erlang \
+  -c erlang-record \
+  -x "outputCodeDir=$GOLDEN/core/erlang-record"
+
 TEXTS="$FIXTURES/l10n/Data/texts.json"
 gen l10n "l10n/default" -d json -d text-list \
   -x "l10n.provider=default" \

@@ -12,7 +12,7 @@ public static class GoldenAssert
 {
     private static readonly HashSet<string> s_textExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
-        ".json", ".xml", ".yaml", ".yml", ".lua", ".txt", ".cs", ".proto", ".fbs",
+        ".json", ".xml", ".yaml", ".yml", ".lua", ".txt", ".cs", ".proto", ".fbs", ".erl", ".hrl",
     };
 
     public static void AssertDirectoryMatches(string actualDir, string goldenRelativeDir)

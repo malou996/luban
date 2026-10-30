@@ -50,12 +50,12 @@ public abstract class ToLiteralVisitorBase : IDataFuncVisitor<string>
         return type.Value.ToString();
     }
 
-    public string Accept(DFloat type)
+    public virtual string Accept(DFloat type)
     {
         return type.Value.ToString();
     }
 
-    public string Accept(DDouble type)
+    public virtual string Accept(DDouble type)
     {
         return type.Value.ToString();
     }

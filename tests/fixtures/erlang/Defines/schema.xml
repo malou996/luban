@@ -1,0 +1,29 @@
+<module name="">
+    <bean name="Range">
+        <var name="startTime" type="int"/>
+        <var name="endTime" type="int"/>
+    </bean>
+
+    <bean name="Shape">
+        <var name="id" type="int"/>
+        <bean name="Circle">
+            <var name="time" type="Range"/>
+        </bean>
+        <bean name="Rect">
+            <var name="width" type="int"/>
+        </bean>
+    </bean>
+
+    <bean name="ItemBase">
+        <var name="id" type="int"/>
+        <bean name="Normal">
+            <var name="num" type="int"/>
+            <var name="shape" type="Shape"/>
+        </bean>
+        <bean name="Equipment">
+            <var name="value" type="int"/>
+        </bean>
+    </bean>
+
+    <table name="TbAbstract" value="ItemBase" index="id" input="*@abstract.json"/>
+</module>
