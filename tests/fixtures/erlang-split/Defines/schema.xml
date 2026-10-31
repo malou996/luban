@@ -1,0 +1,22 @@
+<module name="">
+    <bean name="SplitItem">
+        <var name="id" type="int"/>
+        <var name="name" type="string"/>
+    </bean>
+
+    <bean name="SplitScore">
+        <var name="uid" type="int"/>
+        <var name="stage" type="int"/>
+        <var name="score" type="int"/>
+    </bean>
+
+    <table name="TbSplitItem" value="SplitItem" index="id" input="*@splititem.json" tags="erlang.split=3"/>
+    <table name="TbSplitScore" value="SplitScore" mode="list" index="uid+stage" input="*@splitscore.json" tags="erlang.split=2"/>
+
+    <bean name="SparseRow">
+        <var name="id" type="int"/>
+        <var name="v" type="int"/>
+    </bean>
+
+    <table name="TbSplitSparse" value="SparseRow" index="id" input="*@splitsparse.json" tags="erlang.split=3"/>
+</module>

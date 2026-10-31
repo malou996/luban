@@ -41,6 +41,8 @@ public interface IDataTarget
 
     OutputFile ExportTable(DefTable table, List<Record> records);
 
+    IReadOnlyList<OutputFile> ExportTableFiles(DefTable table, List<Record> records);
+
     OutputFile ExportTables(List<DefTable> tables);
 
     OutputFile ExportRecord(DefTable table, Record record);

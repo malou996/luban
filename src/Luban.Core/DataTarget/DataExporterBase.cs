@@ -36,7 +36,10 @@ public abstract class DataExporterBase : IDataExporter
             {
                 var tasks = tables.Select(table => Task.Run(() =>
                 {
-                    manifest.AddFile(dataTarget.ExportTable(table, ctx.GetTableExportDataList(table)));
+                    foreach (var file in dataTarget.ExportTableFiles(table, ctx.GetTableExportDataList(table)))
+                    {
+                        manifest.AddFile(file);
+                    }
                 })).ToArray();
                 Task.WaitAll(tasks);
                 break;

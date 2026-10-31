@@ -70,6 +70,14 @@ public abstract class DataTargetBase : IDataTarget
 
     public abstract OutputFile ExportTable(DefTable table, List<Record> records);
 
+    /// <summary>
+    /// 单张表输出的全部文件。默认只包含 ExportTable 的单文件结果；需要一表多文件的目标重写本方法。
+    /// </summary>
+    public virtual IReadOnlyList<OutputFile> ExportTableFiles(DefTable table, List<Record> records)
+    {
+        return new[] { ExportTable(table, records) };
+    }
+
     public virtual OutputFile ExportTables(List<DefTable> tables)
     {
         throw new NotSupportedException();

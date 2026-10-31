@@ -1,0 +1,8 @@
+<module name="">
+    <bean name="Row">
+        <var name="id" type="int"/>
+        <var name="v" type="int"/>
+    </bean>
+
+    <table name="TbOne" value="Row" mode="one" input="row.json" tags="erlang.split=2"/>
+</module>

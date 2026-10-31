@@ -226,6 +226,147 @@ halt(0).
     }
 
     [Fact]
+    public void Erlang_Split_GeneratesFacadeAndShards()
+    {
+        using var ws = new TempWorkspace();
+        LubanRunner.Run(
+            TestPaths.FixtureConf("erlang-split"),
+            codeTargets: new[] { "erlang-record" },
+            dataTargets: new[] { "erlang" },
+            outputCodeDir: ws.CodeDir,
+            outputDataDir: ws.DataDir);
+
+        // map 表 erlang.split=3：1 个门面加 3 个子模块
+        Assert.Equal(new[] { "tbsplititem.erl", "tbsplititem_0.erl", "tbsplititem_1.erl", "tbsplititem_2.erl" },
+            Directory.GetFiles(ws.DataDir, "tbsplititem*.erl").Select(Path.GetFileName).OrderBy(f => f, StringComparer.Ordinal));
+        // list 表 erlang.split=2：1 个门面加 2 个子模块
+        Assert.Equal(new[] { "tbsplitscore.erl", "tbsplitscore_0.erl", "tbsplitscore_1.erl" },
+            Directory.GetFiles(ws.DataDir, "tbsplitscore*.erl").Select(Path.GetFileName).OrderBy(f => f, StringComparer.Ordinal));
+        // 空分片照常生成
+        Assert.Equal(new[] { "tbsplitsparse.erl", "tbsplitsparse_0.erl", "tbsplitsparse_1.erl", "tbsplitsparse_2.erl" },
+            Directory.GetFiles(ws.DataDir, "tbsplitsparse*.erl").Select(Path.GetFileName).OrderBy(f => f, StringComparer.Ordinal));
+        // .hrl 数量与内容不随切分变化
+        Assert.Equal(new[] { "tbsplititem.hrl", "tbsplitscore.hrl", "tbsplitsparse.hrl" },
+            Directory.GetFiles(ws.CodeDir, "*.hrl").Select(Path.GetFileName).OrderBy(f => f, StringComparer.Ordinal));
+
+        string facade = File.ReadAllText(Path.Combine(ws.DataDir, "tbsplititem.erl"));
+        Assert.Contains("-module(tbsplititem).", facade);
+        Assert.DoesNotContain("-include", facade);
+        Assert.Contains("get(Key) when is_integer(Key) ->", facade);
+        Assert.Contains("    case ((Key rem 3) + 3) rem 3 of", facade);
+        Assert.Contains("        0 -> tbsplititem_0:get(Key);", facade);
+        Assert.Contains("        2 -> tbsplititem_2:get(Key)", facade);
+        Assert.Contains("get(_) ->", facade);
+        Assert.Contains("    none.", facade);
+        Assert.Contains("    lists:append([tbsplititem_0:all(), tbsplititem_1:all(), tbsplititem_2:all()]).", facade);
+
+        // 多字段索引取首字段取模
+        string scoreFacade = File.ReadAllText(Path.Combine(ws.DataDir, "tbsplitscore.erl"));
+        Assert.Contains("get(Key) when is_tuple(Key), is_integer(element(1, Key)) ->", scoreFacade);
+        Assert.Contains("    case ((element(1, Key) rem 2) + 2) rem 2 of", scoreFacade);
+        Assert.Contains("    lists:append([tbsplitscore_0:all(), tbsplitscore_1:all()]).", scoreFacade);
+
+        string sub = File.ReadAllText(Path.Combine(ws.DataDir, "tbsplititem_0.erl"));
+        Assert.Contains("-module(tbsplititem_0).", sub);
+        Assert.Contains("-include(\"tbsplititem.hrl\").", sub);
+        Assert.Contains("get(3) -> #tbsplititem{", sub);
+        Assert.Contains("get(_) -> none.", sub);
+        Assert.Contains("[3, 6].", sub);
+
+        string emptySub = File.ReadAllText(Path.Combine(ws.DataDir, "tbsplitsparse_1.erl"));
+        Assert.Contains("get(_) -> none.", emptySub);
+        Assert.Contains("[]", emptySub);
+    }
+
+    [Fact]
+    public void Erlang_Split_FacadeRoutesAtRuntime()
+    {
+        string erlc = FindExecutable("erlc");
+        string erl = FindExecutable("erl");
+        if (erlc == null || erl == null)
+        {
+            // 本机未安装 Erlang 工具链时跳过编译验证
+            return;
+        }
+
+        using var ws = new TempWorkspace();
+        LubanRunner.Run(
+            TestPaths.FixtureConf("erlang-split"),
+            codeTargets: new[] { "erlang-record" },
+            dataTargets: new[] { "erlang" },
+            outputCodeDir: ws.CodeDir,
+            outputDataDir: ws.DataDir);
+
+        string ebinDir = Path.Combine(ws.Root, "ebin");
+        Directory.CreateDirectory(ebinDir);
+
+        var compile = Run(erlc, new[]
+        {
+            "-Werror",
+            "-I", ws.CodeDir,
+            "-o", ebinDir,
+        }.Concat(Directory.GetFiles(ws.DataDir, "*.erl")).ToArray());
+        Assert.True(compile.ExitCode == 0, $"erlc failed:\n{compile.Stdout}\n{compile.Stderr}");
+
+        const string evalCode = """
+{tbsplititem, 1, <<"sword"/utf8>>} = tbsplititem:get(1),
+{tbsplititem, 4, <<"wand"/utf8>>} = tbsplititem:get(4),
+{tbsplititem, -2, <<"cursed"/utf8>>} = tbsplititem:get(-2),
+{tbsplititem, 10, <<"crown"/utf8>>} = tbsplititem:get(10),
+none = tbsplititem:get(99),
+none = tbsplititem:get(atom_key),
+[-2, 1, 2, 3, 4, 5, 6, 7, 10] = lists:sort(tbsplititem:all()),
+{tbsplititem, 3, <<"bow"/utf8>>} = tbsplititem_0:get(3),
+none = tbsplititem_0:get(1),
+[3, 6] = tbsplititem_0:all(),
+[-2, 1, 4, 7, 10] = lists:sort(tbsplititem_1:all()),
+[2, 5] = lists:sort(tbsplititem_2:all()),
+{tbsplitscore, 1, 1, 100} = tbsplitscore:get({1, 1}),
+{tbsplitscore, 2, 1, 300} = tbsplitscore:get({2, 1}),
+{tbsplitscore, -3, 5, 500} = tbsplitscore:get({-3, 5}),
+none = tbsplitscore:get({9, 9}),
+none = tbsplitscore:get(not_a_tuple),
+none = tbsplitscore:get({not_int, 1}),
+[{-3, 5}, {1, 1}, {1, 2}, {2, 1}, {4, 1}] = lists:sort(tbsplitscore:all()),
+none = tbsplitscore_0:get({1, 1}),
+{tbsplitscore, 4, 1, 400} = tbsplitscore_0:get({4, 1}),
+[{2, 1}, {4, 1}] = lists:sort(tbsplitscore_0:all()),
+{tbsplitsparse, 3, 30} = tbsplitsparse:get(3),
+none = tbsplitsparse:get(4),
+[] = tbsplitsparse_1:all(),
+[] = tbsplitsparse_2:all(),
+none = tbsplitsparse_2:get(6),
+io:format("erlang split check OK~n"),
+halt(0).
+""";
+
+        var runResult = Run(erl, new[]
+        {
+            "-noshell",
+            "-pa", ebinDir,
+            "-eval", evalCode,
+        });
+        Assert.True(runResult.ExitCode == 0 && runResult.Stdout.Contains("erlang split check OK"),
+            $"erl runtime check failed:\n{runResult.Stdout}\n{runResult.Stderr}");
+    }
+
+    [Theory]
+    [InlineData("erlang-split/bad-count", "erlang.split", "must be an integer >= 2")]
+    [InlineData("erlang-split/one-mode", "does not support erlang.split", "mode 'one'")]
+    [InlineData("erlang-split/indexless-list", "does not support erlang.split", "mode 'list'")]
+    [InlineData("erlang-split/string-key", "does not support erlang.split", "mod field")]
+    public void Erlang_Split_InvalidConfig_Fails(string fixture, string fragment1, string fragment2)
+    {
+        var result = LubanRunner.GenerateToTemp(
+            fixture,
+            dataTargets: new[] { "erlang" },
+            throwOnError: false);
+        Assert.False(result.Succeeded);
+        Assert.Contains(fragment1, result.Exception.ToString());
+        Assert.Contains(fragment2, result.Exception.ToString());
+    }
+
+    [Fact]
     public void Erlang_RecordFormats_Parse()
     {
         Assert.Equal(ErlangRecordFormat.FormattedRecord, ErlangRecordFormats.Parse("formatted_record", "test"));

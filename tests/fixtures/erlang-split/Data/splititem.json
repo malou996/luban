@@ -1,0 +1,11 @@
+[
+  { "id": 1, "name": "sword" },
+  { "id": 2, "name": "shield" },
+  { "id": 3, "name": "bow" },
+  { "id": 4, "name": "wand" },
+  { "id": 5, "name": "potion" },
+  { "id": 6, "name": "ring" },
+  { "id": 7, "name": "gem" },
+  { "id": -2, "name": "cursed" },
+  { "id": 10, "name": "crown" }
+]
