@@ -38,7 +38,7 @@ namespace Luban.Erlang.DataTarget;
 /// 表定义 tags 上的 erlang.split=N（N 为 >= 2 的整数）将表切分为 N 个数据子模块（表名_0 .. 表名_N-1）
 /// 加一个门面模块（表名）：门面按主键（或索引首字段）对 N 归一化取模路由 get/1，
 /// all/0 聚合各子模块结果；仅支持 map 表与带索引的 list 表，取模字段仅支持整型家族与 enum。
-/// record 值的渲染格式由 erlang.recordFormat 控制（formatted_record / online_record / online_tuple），
+/// record 值的渲染格式由 erlang.recordFormat 控制（formatted_record / compact_record / compact_tuple），
 /// 表定义 tags 上的 erlang.recordFormat 优先于 xargs 选项，缺省 formatted_record。
 /// record 定义在同名 .hrl 头文件中（由 erlang-record code target 生成），切分不改变 .hrl 的数量与内容。
 /// </summary>

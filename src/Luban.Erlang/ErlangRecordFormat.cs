@@ -45,9 +45,9 @@ public static class ErlangRecordFormats
         {
             case "formatted_record":
                 return ErlangRecordFormat.FormattedRecord;
-            case "online_record":
+            case "compact_record":
                 return ErlangRecordFormat.OnlineRecord;
-            case "online_tuple":
+            case "compact_tuple":
                 return ErlangRecordFormat.OnlineTuple;
             default:
                 throw new LubanException("error.erlang.invalid_record_format", source, value);

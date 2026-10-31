@@ -16,7 +16,7 @@
 
   "error.env.option_not_exists": "选项 '{0}' 不存在",
   "error.env.invalid_bool_option": "非法的 bool 选项值:{0}",
-  "error.erlang.invalid_record_format": "非法的 erlang.recordFormat 取值 '{1}'（{0}），合法取值: formatted_record, online_record, online_tuple",
+  "error.erlang.invalid_record_format": "非法的 erlang.recordFormat 取值 '{1}'（{0}），合法取值: formatted_record, compact_record, compact_tuple",
   "error.erlang.invalid_split_count": "非法的 erlang.split 取值 '{1}'（表:'{0}'），必须为 >= 2 的整数",
   "error.erlang.split_unsupported_mode": "表:'{0}' mode:'{1}' 不支持 erlang.split，仅支持 map 表与带索引的 list 表",
   "error.erlang.split_unsupported_key_type": "表:'{0}' 的取模字段:'{1}' 类型:'{2}' 不支持 erlang.split，仅支持整型家族与 enum",

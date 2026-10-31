@@ -30,8 +30,8 @@ namespace Luban.Erlang.DataVisitors;
 /// <summary>
 /// 把数据渲染为 Erlang term 字面量。
 /// formatted_record：record 多行缩进排版，嵌套 record 递归展开，list、map（含抽象 bean 的 map）保持单行；
-/// online_record：record 单行紧凑字面量；
-/// online_tuple：具体 bean 渲染为 {record名, 各字段值...}，嵌套具体 bean 递归转换，抽象 bean 仍为带类型 tag 的 map。
+/// compact_record：record 单行紧凑字面量；
+/// compact_tuple：具体 bean 渲染为 {record名, 各字段值...}，嵌套具体 bean 递归转换，抽象 bean 仍为带类型 tag 的 map。
 /// 每个 ExportTable 调用使用独立实例（TopRecordName 有状态）。
 /// </summary>
 public class ToErlangLiteralVisitor : ToLiteralVisitorBase
@@ -150,7 +150,7 @@ public class ToErlangLiteralVisitor : ToLiteralVisitorBase
         return sb.ToString();
     }
 
-    /// <summary>online_tuple：依次输出各字段值，每个值前补逗号加一个空格分隔，不写字段名。</summary>
+    /// <summary>compact_tuple：依次输出各字段值，每个值前补逗号加一个空格分隔，不写字段名。</summary>
     private void AppendBeanFieldValues(DBean type, StringBuilder sb)
     {
         int fieldIndex = 0;
@@ -165,7 +165,7 @@ public class ToErlangLiteralVisitor : ToLiteralVisitorBase
         }
     }
 
-    /// <summary>online_record：各字段单行内联，name = value 形式。</summary>
+    /// <summary>compact_record：各字段单行内联，name = value 形式。</summary>
     private void AppendBeanFieldsInline(DBean type, StringBuilder sb)
     {
         bool first = true;

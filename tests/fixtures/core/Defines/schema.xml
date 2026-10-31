@@ -38,6 +38,6 @@
     </bean>
 
     <table name="TbItem" value="Item" input="*@item.json"/>
-    <table name="TbGlobal" value="GlobalConfig" mode="one" input="global.json" tags="erlang.recordFormat=online_tuple"/>
-    <table name="TbScore" value="ScoreRow" mode="list" index="uid+stage" input="*@score.json" tags="erlang.recordFormat=online_record"/>
+    <table name="TbGlobal" value="GlobalConfig" mode="one" input="global.json" tags="erlang.recordFormat=compact_tuple"/>
+    <table name="TbScore" value="ScoreRow" mode="list" index="uid+stage" input="*@score.json" tags="erlang.recordFormat=compact_record"/>
 </module>

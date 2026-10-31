@@ -157,15 +157,15 @@ halt(0).
             TestPaths.FixtureConf("core"),
             dataTargets: new[] { "erlang" },
             outputDataDir: ws.DataDir,
-            extraOptions: new Dictionary<string, string> { ["erlang.recordFormat"] = "online_record" });
+            extraOptions: new Dictionary<string, string> { ["erlang.recordFormat"] = "compact_record" });
 
-        // TbItem 未配置 tags，回退到 xargs 的 online_record
+        // TbItem 未配置 tags，回退到 xargs 的 compact_record
         string tbitem = File.ReadAllText(Path.Combine(ws.DataDir, "tbitem.erl"));
         Assert.Contains("get(1) -> #tbitem{id = 1, name = <<\"sword\"/utf8>>, quality = 1,", tbitem);
-        // TbScore 的 tags=erlang.recordFormat=online_record
+        // TbScore 的 tags=erlang.recordFormat=compact_record
         string tbscore = File.ReadAllText(Path.Combine(ws.DataDir, "tbscore.erl"));
         Assert.Contains("get({1, 1}) -> #tbscore{uid = 1, stage = 1, score = 100};", tbscore);
-        // TbGlobal 的 tags=erlang.recordFormat=online_tuple 优先于 xargs
+        // TbGlobal 的 tags=erlang.recordFormat=compact_tuple 优先于 xargs
         string tbglobal = File.ReadAllText(Path.Combine(ws.DataDir, "tbglobal.erl"));
         Assert.Contains("get() -> {tbglobal, 3, <<\"demo\"/utf8>>}.", tbglobal);
     }
@@ -202,7 +202,7 @@ halt(0).
             TestPaths.FixtureConf("erlang"),
             dataTargets: new[] { "erlang" },
             outputDataDir: ws.DataDir,
-            extraOptions: new Dictionary<string, string> { ["erlang.recordFormat"] = "online_tuple" });
+            extraOptions: new Dictionary<string, string> { ["erlang.recordFormat"] = "compact_tuple" });
 
         string src = File.ReadAllText(Path.Combine(ws.DataDir, "tbabstract.erl"));
         // 嵌套具体 bean 递归转换为 tuple；抽象 bean 字段仍为带 __type__ 的 map
@@ -370,8 +370,8 @@ halt(0).
     public void Erlang_RecordFormats_Parse()
     {
         Assert.Equal(ErlangRecordFormat.FormattedRecord, ErlangRecordFormats.Parse("formatted_record", "test"));
-        Assert.Equal(ErlangRecordFormat.OnlineRecord, ErlangRecordFormats.Parse("online_record", "test"));
-        Assert.Equal(ErlangRecordFormat.OnlineTuple, ErlangRecordFormats.Parse("online_tuple", "test"));
+        Assert.Equal(ErlangRecordFormat.OnlineRecord, ErlangRecordFormats.Parse("compact_record", "test"));
+        Assert.Equal(ErlangRecordFormat.OnlineTuple, ErlangRecordFormats.Parse("compact_tuple", "test"));
         var e = Assert.Throws<LubanException>(() => ErlangRecordFormats.Parse("bogus", "test"));
         Assert.Contains("formatted_record", e.Message);
     }
