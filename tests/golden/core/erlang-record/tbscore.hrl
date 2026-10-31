@@ -11,9 +11,9 @@
 -define(luban_record_tbscore, 1).
 
 -record(tbscore, {
-    uid :: integer(),
-    stage :: integer(),
-    score :: integer()
+    uid :: integer(),    %% 用户编号
+    stage :: integer(),  %% 关卡编号
+    score :: integer()   %% 积分
 }).
 
 -endif. %% luban_record_tbscore

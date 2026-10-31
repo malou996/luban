@@ -10,8 +10,9 @@
 -ifndef(luban_record_tbglobal).
 -define(luban_record_tbglobal, 1).
 
+%% 全局配置
 -record(tbglobal, {
-    version :: integer(),
+    version :: integer(),  %% 版本号
     title :: binary()
 }).
 

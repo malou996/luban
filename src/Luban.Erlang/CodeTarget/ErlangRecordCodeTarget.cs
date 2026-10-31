@@ -186,22 +186,61 @@ public class ErlangRecordCodeTarget : CodeTargetBase
         private string GenRecordBlock(string rawRecordName, DefBean bean, HashSet<DefBean> inProgress)
         {
             var fields = bean.HierarchyExportFields
-                .Select(f => $"    {ErlangFormat.Atom(f.Name)} :: {TypeAnnotation(f.CType, inProgress)}")
+                .Select(f => (Def: $"    {ErlangFormat.Atom(f.Name)} :: {TypeAnnotation(f.CType, inProgress)}", Comment: f.Comment))
                 .ToList();
+            // 字段注释的 %% 对齐列：最长字段定义行（含行尾逗号）之后留 2 个空格
+            int commentColumn = fields.Count == 0 ? 0
+                : fields.Select((f, i) => f.Def.Length + (i < fields.Count - 1 ? 1 : 0)).Max() + 2;
+            var fieldLines = new List<string>();
+            for (int i = 0; i < fields.Count; i++)
+            {
+                string def = fields[i].Def + (i < fields.Count - 1 ? "," : "");
+                if (string.IsNullOrWhiteSpace(fields[i].Comment))
+                {
+                    fieldLines.Add(def);
+                    continue;
+                }
+                var parts = CommentLines(fields[i].Comment);
+                fieldLines.Add(def.PadRight(commentColumn) + CommentText(parts[0]));
+                // 注释内容含换行时续行对齐到 %% 所在列
+                string continuationIndent = new string(' ', commentColumn);
+                foreach (string part in parts.Skip(1))
+                {
+                    fieldLines.Add(continuationIndent + CommentText(part));
+                }
+            }
             string guard = ErlangFormat.Atom($"luban_record_{rawRecordName}");
             var sb = new StringBuilder();
             sb.AppendLine($"-ifndef({guard}).");
             sb.AppendLine($"-define({guard}, 1).");
             sb.AppendLine();
-            sb.AppendLine($"-record({ErlangFormat.Atom(rawRecordName)}, {{");
-            if (fields.Count > 0)
+            if (!string.IsNullOrWhiteSpace(bean.Comment))
             {
-                sb.AppendLine(string.Join(",\n", fields));
+                foreach (string part in CommentLines(bean.Comment))
+                {
+                    sb.AppendLine(CommentText(part));
+                }
+            }
+            sb.AppendLine($"-record({ErlangFormat.Atom(rawRecordName)}, {{");
+            if (fieldLines.Count > 0)
+            {
+                sb.AppendLine(string.Join("\n", fieldLines));
             }
             sb.AppendLine("}).");
             sb.AppendLine();
             sb.AppendLine($"-endif. %% {guard}");
             return sb.ToString();
+        }
+
+        // 单条注释文本：内容为空时只输出 %%，非空时 %% 与内容之间留 1 个空格
+        private static string CommentText(string text) => text.Length == 0 ? "%%" : $"%% {text}";
+
+        // Comment 按换行切分，每段去掉首尾空白
+        private static List<string> CommentLines(string comment)
+        {
+            return comment.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n')
+                .Select(part => part.Trim())
+                .ToList();
         }
 
         private static string TypeAnnotation(TType type, HashSet<DefBean> inProgress)

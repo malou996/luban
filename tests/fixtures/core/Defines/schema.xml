@@ -6,35 +6,35 @@
     </enum>
 
     <bean name="Shape">
-        <var name="id" type="int"/>
-        <bean name="Circle">
-            <var name="radius" type="float"/>
+        <var name="id" type="int" comment="图形编号"/>
+        <bean name="Circle" comment="圆形">
+            <var name="radius" type="float" comment="半径"/>
         </bean>
-        <bean name="Rect">
-            <var name="width" type="float"/>
-            <var name="height" type="float"/>
+        <bean name="Rect" comment="矩形">
+            <var name="width" type="float" comment="宽度"/>
+            <var name="height" type="float" comment="高度"/>
         </bean>
     </bean>
 
-    <bean name="Item">
-        <var name="id" type="int"/>
-        <var name="name" type="string"/>
-        <var name="quality" type="Quality"/>
+    <bean name="Item" comment="道具">
+        <var name="id" type="int" comment="道具编号"/>
+        <var name="name" type="string" comment="道具名称"/>
+        <var name="quality" type="Quality" comment="品质&#10;白绿蓝三档"/>
         <var name="tags" type="(list#sep=,),string"/>
-        <var name="attrs" type="(map#sep=,),string,int"/>
+        <var name="attrs" type="(map#sep=,),string,int" comment="属性表"/>
         <var name="flags" type="(set#sep=,),int"/>
-        <var name="shape" type="Shape"/>
+        <var name="shape" type="Shape" comment="形状"/>
     </bean>
 
-    <bean name="GlobalConfig">
-        <var name="version" type="int"/>
+    <bean name="GlobalConfig" comment="全局配置">
+        <var name="version" type="int" comment="版本号"/>
         <var name="title" type="string"/>
     </bean>
 
     <bean name="ScoreRow">
-        <var name="uid" type="int"/>
-        <var name="stage" type="int"/>
-        <var name="score" type="int"/>
+        <var name="uid" type="int" comment="用户编号"/>
+        <var name="stage" type="int" comment="关卡编号"/>
+        <var name="score" type="int" comment="积分"/>
     </bean>
 
     <table name="TbItem" value="Item" input="*@item.json"/>

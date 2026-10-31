@@ -10,9 +10,10 @@
 -ifndef(luban_record_circle).
 -define(luban_record_circle, 1).
 
+%% 圆形
 -record(circle, {
-    id :: integer(),
-    radius :: float()
+    id :: integer(),   %% 图形编号
+    radius :: float()  %% 半径
 }).
 
 -endif. %% luban_record_circle
@@ -20,10 +21,11 @@
 -ifndef(luban_record_rect).
 -define(luban_record_rect, 1).
 
+%% 矩形
 -record(rect, {
-    id :: integer(),
-    width :: float(),
-    height :: float()
+    id :: integer(),   %% 图形编号
+    width :: float(),  %% 宽度
+    height :: float()  %% 高度
 }).
 
 -endif. %% luban_record_rect
@@ -31,14 +33,16 @@
 -ifndef(luban_record_tbitem).
 -define(luban_record_tbitem, 1).
 
+%% 道具
 -record(tbitem, {
-    id :: integer(),
-    name :: binary(),
-    quality :: integer(),
+    id :: integer(),                    %% 道具编号
+    name :: binary(),                   %% 道具名称
+    quality :: integer(),               %% 品质
+                                        %% 白绿蓝三档
     tags :: [binary()],
-    attrs :: #{binary() := integer()},
+    attrs :: #{binary() := integer()},  %% 属性表
     flags :: [integer()],
-    shape :: map()
+    shape :: map()                      %% 形状
 }).
 
 -endif. %% luban_record_tbitem
