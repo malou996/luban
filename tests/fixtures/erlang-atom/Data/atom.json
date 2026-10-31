@@ -1,0 +1,4 @@
+[
+  { "key": "fire", "plain": "火焰", "skills": ["fire_ball", "heal"], "stats": [["hp", 100], ["mp", 50]] },
+  { "key": "Ice-Master", "plain": "plain text", "skills": ["frost"], "stats": [["atk", 9]] }
+]

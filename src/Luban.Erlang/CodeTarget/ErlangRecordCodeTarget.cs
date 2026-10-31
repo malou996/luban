@@ -266,7 +266,7 @@ public class ErlangRecordCodeTarget : CodeTargetBase
                 TByte or TShort or TInt or TLong => "integer()",
                 TFloat or TDouble => "float()",
                 TEnum or TDateTime => "integer()",
-                TString => "binary()",
+                TString s => s.HasTag(ErlangFormat.AtomTag) ? "atom()" : "binary()",
                 TBean bean => bean.DefBean.IsAbstractType
                     ? "map()"
                     : inProgress.Contains(bean.DefBean)

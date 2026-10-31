@@ -367,6 +367,88 @@ halt(0).
     }
 
     [Fact]
+    public void Erlang_AtomTag_RendersStringFieldsAsAtom()
+    {
+        using var ws = new TempWorkspace();
+        LubanRunner.Run(
+            TestPaths.FixtureConf("erlang-atom"),
+            codeTargets: new[] { "erlang-record" },
+            dataTargets: new[] { "erlang" },
+            outputCodeDir: ws.CodeDir,
+            outputDataDir: ws.DataDir);
+
+        // 带 erlang.atom tag 的 string：record 字段、list 元素、map 键、索引键均按 atom 渲染；无 tag 字段保持 utf8 binary
+        string src = File.ReadAllText(Path.Combine(ws.DataDir, "tb_atom.erl"));
+        Assert.Contains(
+            "get(fire) -> #tb_atom{key = fire, plain = <<\"火焰\"/utf8>>, skills = [fire_ball, heal], stats = #{hp => 100, mp => 50}};",
+            src);
+        // 非小写字母开头的值输出带引号 atom
+        Assert.Contains(
+            "get('Ice-Master') -> #tb_atom{key = 'Ice-Master', plain = <<\"plain text\"/utf8>>, skills = [frost], stats = #{atk => 9}};",
+            src);
+        Assert.Contains("get(_) -> none.", src);
+        Assert.Contains("[fire, 'Ice-Master'].", src);
+
+        // record 头类型注解：tag 字段 atom()，无 tag 字段 binary()
+        string hrl = File.ReadAllText(Path.Combine(ws.CodeDir, "tb_atom.hrl"));
+        Assert.Contains("key :: atom(),", hrl);
+        Assert.Contains("plain :: binary(),", hrl);
+        Assert.Contains("skills :: [atom()],", hrl);
+        Assert.Contains("stats :: #{atom() := integer()}", hrl);
+    }
+
+    [Fact]
+    public void Erlang_AtomTag_ErlcCompileAndLoad()
+    {
+        string erlc = FindExecutable("erlc");
+        string erl = FindExecutable("erl");
+        if (erlc == null || erl == null)
+        {
+            // 本机未安装 Erlang 工具链时跳过编译验证
+            return;
+        }
+
+        using var ws = new TempWorkspace();
+        LubanRunner.Run(
+            TestPaths.FixtureConf("erlang-atom"),
+            codeTargets: new[] { "erlang-record" },
+            dataTargets: new[] { "erlang" },
+            outputCodeDir: ws.CodeDir,
+            outputDataDir: ws.DataDir);
+
+        string ebinDir = Path.Combine(ws.Root, "ebin");
+        Directory.CreateDirectory(ebinDir);
+
+        var compile = Run(erlc, new[]
+        {
+            "-Werror",
+            "-I", ws.CodeDir,
+            "-o", ebinDir,
+        }.Concat(Directory.GetFiles(ws.DataDir, "*.erl")).ToArray());
+        Assert.True(compile.ExitCode == 0, $"erlc failed:\n{compile.Stdout}\n{compile.Stderr}");
+
+        // eval 参数经命令行传递，只使用 ASCII；火焰行的 binary 内容由源码断言覆盖
+        const string evalCode = """
+{tb_atom, fire, Plain, [fire_ball, heal], #{hp := 100, mp := 50}} = tb_atom:get(fire),
+true = is_binary(Plain),
+{tb_atom, 'Ice-Master', <<"plain text"/utf8>>, [frost], #{atk := 9}} = tb_atom:get('Ice-Master'),
+none = tb_atom:get(unknown),
+[fire, 'Ice-Master'] = tb_atom:all(),
+io:format("erlang atom check OK~n"),
+halt(0).
+""";
+
+        var runResult = Run(erl, new[]
+        {
+            "-noshell",
+            "-pa", ebinDir,
+            "-eval", evalCode,
+        });
+        Assert.True(runResult.ExitCode == 0 && runResult.Stdout.Contains("erlang atom check OK"),
+            $"erl runtime check failed:\n{runResult.Stdout}\n{runResult.Stderr}");
+    }
+
+    [Fact]
     public void Erlang_Macro_GeneratesHrl_MatchesGolden()
     {
         using var ws = new TempWorkspace();

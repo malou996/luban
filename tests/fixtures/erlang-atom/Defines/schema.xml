@@ -1,0 +1,10 @@
+<module name="">
+    <bean name="AtomRow">
+        <var name="key" type="string#erlang.atom" comment="atom 索引键"/>
+        <var name="plain" type="string" comment="缺省 utf8 binary"/>
+        <var name="skills" type="(list,string#erlang.atom)" comment="atom list"/>
+        <var name="stats" type="(map,string#erlang.atom,int)" comment="atom 键 map"/>
+    </bean>
+
+    <table name="TbAtom" value="AtomRow" index="key" input="*@atom.json" tags="erlang.recordFormat=compact_record"/>
+</module>

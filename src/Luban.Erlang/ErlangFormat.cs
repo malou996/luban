@@ -28,6 +28,11 @@ namespace Luban.Erlang;
 public static class ErlangFormat
 {
     /// <summary>
+    /// string 字段的类型 tag：值渲染为 atom、record 头注解为 atom()。schema 写法 string#erlang.atom。
+    /// </summary>
+    public const string AtomTag = "erlang.atom";
+
+    /// <summary>
     /// Erlang 保留字，atom 与这些名字相同时必须加引号。
     /// </summary>
     private static readonly HashSet<string> s_reservedWords = new()

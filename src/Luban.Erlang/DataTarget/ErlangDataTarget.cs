@@ -263,7 +263,7 @@ public class ErlangDataTarget : DataTargetBase
 
     private static string FormatIndexKey(Record record, DefTable table, ToErlangLiteralVisitor visitor)
     {
-        var keyValues = table.IndexList.Select(idx => record.Data.Fields[idx.IndexFieldIdIndex].Apply(visitor));
+        var keyValues = table.IndexList.Select(idx => record.Data.Fields[idx.IndexFieldIdIndex].Apply(visitor, idx.IndexField.CType));
         return keyValues.Count() == 1 ? keyValues.First() : $"{{{string.Join(", ", keyValues)}}}";
     }
 
