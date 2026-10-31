@@ -1,0 +1,4 @@
+[
+  { "id": 1, "name": "RATIO_HALF", "ratio": 0.5 },
+  { "id": 2, "name": "RATIO_PI", "ratio": 3.14159 }
+]

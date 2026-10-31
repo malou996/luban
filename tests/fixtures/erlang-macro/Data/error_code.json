@@ -1,0 +1,7 @@
+[
+  { "id": 0, "code": "E_OK", "desc": "成功" },
+  { "id": 1, "code": "E_BADARG", "desc": "参数错误" },
+  { "id": 3, "code": "E_GOLD_LACK", "desc": "金币不足" },
+  { "id": 7, "code": "E_LOGIN_BAN_ROLE", "desc": "该角色被禁止登陆" },
+  { "id": 8, "code": "E_SILENT", "desc": "" }
+]

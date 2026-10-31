@@ -1,0 +1,4 @@
+[
+  { "id": 1, "name": "KIND_BADARG", "val": "badarg" },
+  { "id": 2, "name": "KIND_ERR", "val": "error" }
+]

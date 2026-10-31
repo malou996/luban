@@ -1,0 +1,10 @@
+<module name="">
+    <bean name="Row">
+        <var name="id" type="int"/>
+        <var name="code" type="string"/>
+    </bean>
+    <table name="TbLeft" value="Row" index="id" input="*@rows.json"
+           tags="erlang.macro=name:code,value:id,output:shared_name"/>
+    <table name="TbRight" value="Row" index="id" input="*@rows2.json"
+           tags="erlang.macro=name:code,value:id,output:shared_name"/>
+</module>

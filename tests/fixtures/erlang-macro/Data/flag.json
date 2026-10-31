@@ -1,0 +1,4 @@
+[
+  { "id": 1, "name": "FLAG_ON", "on": true },
+  { "id": 2, "name": "FLAG_OFF", "on": false }
+]

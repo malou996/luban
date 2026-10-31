@@ -104,6 +104,14 @@ public static class ErlangFormat
     }
 
     /// <summary>
+    /// 判断名字能否作为宏名使用：字母开头，仅含字母、数字、_ 与 @。
+    /// </summary>
+    public static bool IsValidMacroName(string name)
+    {
+        return IsUnquotedMacroName(name);
+    }
+
+    /// <summary>
     /// 输出 utf8 binary 字面量，形如 &lt;&lt;"text"/utf8&gt;&gt;。非 ASCII 字符原样保留。
     /// </summary>
     public static string EscapeBinaryString(string s)

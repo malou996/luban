@@ -1,0 +1,4 @@
+[
+  { "id": 1, "name": "MSG_HELLO", "text": "hello", "note": "欢迎语" },
+  { "id": 2, "name": "MSG_QUOTE", "text": "say \"hi\"", "note": "" }
+]

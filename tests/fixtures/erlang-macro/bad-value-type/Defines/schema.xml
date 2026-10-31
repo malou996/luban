@@ -1,0 +1,14 @@
+<module name="">
+    <enum name="Quality">
+        <var name="WHITE" value="0"/>
+        <var name="GREEN" value="1"/>
+    </enum>
+
+    <bean name="Row">
+        <var name="id" type="int"/>
+        <var name="code" type="string"/>
+        <var name="quality" type="Quality"/>
+    </bean>
+    <table name="TbRow" value="Row" index="id" input="*@rows.json"
+           tags="erlang.macro=name:code,value:quality"/>
+</module>

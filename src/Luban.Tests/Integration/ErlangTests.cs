@@ -367,6 +367,189 @@ halt(0).
     }
 
     [Fact]
+    public void Erlang_Macro_GeneratesHrl_MatchesGolden()
+    {
+        using var ws = new TempWorkspace();
+        LubanRunner.Run(
+            TestPaths.FixtureConf("erlang-macro"),
+            dataTargets: new[] { "erlang-macro" },
+            outputDataDir: ws.DataDir);
+        GoldenAssert.AssertDirectoryMatches(ws.DataDir, "erlang-macro/erlang-macro");
+    }
+
+    [Fact]
+    public void Erlang_Macro_OnlyTaggedTablesProduceFiles()
+    {
+        using var ws = new TempWorkspace();
+        LubanRunner.Run(
+            TestPaths.FixtureConf("erlang-macro"),
+            dataTargets: new[] { "erlang-macro" },
+            outputDataDir: ws.DataDir);
+
+        // 未配置 tag 的 TbPlain 不产出文件；文件名来自 output 参数或表模块名（缺省）
+        Assert.Equal(new[] { "error_code.hrl", "tb_atom.hrl", "tb_constant.hrl", "tb_empty.hrl", "tb_flag.hrl", "tb_text.hrl" },
+            Directory.GetFiles(ws.DataDir, "*.hrl").Select(Path.GetFileName).OrderBy(f => f, StringComparer.Ordinal));
+
+        // 注释纵向排在最长 define 行之后 2 个空格处
+        string errorCode = File.ReadAllText(Path.Combine(ws.DataDir, "error_code.hrl"));
+        Assert.Contains("-ifndef(LUBAN_ERROR_CODE_HRL).", errorCode);
+        Assert.Contains("-define(E_LOGIN_BAN_ROLE, 7).  %% 该角色被禁止登陆", errorCode);
+        Assert.Contains("-define(E_OK, 0).".PadRight("-define(E_LOGIN_BAN_ROLE, 7).".Length + 2) + "%% 成功", errorCode);
+        Assert.Equal("-define(E_SILENT, 8).",
+            File.ReadAllLines(Path.Combine(ws.DataDir, "error_code.hrl")).Single(l => l.StartsWith("-define(E_SILENT")));
+        Assert.Contains("-endif. %% LUBAN_ERROR_CODE_HRL", errorCode);
+
+        // float 渲染；缺省文件名 = 表模块名
+        string constant = File.ReadAllText(Path.Combine(ws.DataDir, "tb_constant.hrl"));
+        Assert.Contains("-ifndef(LUBAN_TB_CONSTANT_HRL).", constant);
+        Assert.Contains("-define(RATIO_HALF, 0.5).", constant);
+        Assert.Contains("-define(RATIO_PI, 3.14159).", constant);
+
+        // string 值渲染为 utf8 binary；注释为空的行不带 %%
+        string text = File.ReadAllText(Path.Combine(ws.DataDir, "tb_text.hrl"));
+        Assert.Contains("-define(MSG_HELLO, <<\"hello\"/utf8>>).", text);
+        Assert.Contains("%% 欢迎语", text);
+        Assert.Equal("-define(MSG_QUOTE, <<\"say \\\"hi\\\"\"/utf8>>).",
+            File.ReadAllLines(Path.Combine(ws.DataDir, "tb_text.hrl")).Single(l => l.StartsWith("-define(MSG_QUOTE")));
+
+        // :atom 提示渲染为 atom
+        string atom = File.ReadAllText(Path.Combine(ws.DataDir, "tb_atom.hrl"));
+        Assert.Contains("-define(KIND_BADARG, badarg).", atom);
+        Assert.Contains("-define(KIND_ERR, error).", atom);
+
+        // '=' 分隔符与 bool 渲染
+        string flag = File.ReadAllText(Path.Combine(ws.DataDir, "tb_flag.hrl"));
+        Assert.Contains("-define(FLAG_ON, true).", flag);
+        Assert.Contains("-define(FLAG_OFF, false).", flag);
+
+        // 空表：只含 guard 的文件
+        string empty = File.ReadAllText(Path.Combine(ws.DataDir, "tb_empty.hrl"));
+        Assert.Contains("-ifndef(LUBAN_TB_EMPTY_HRL).", empty);
+        Assert.DoesNotContain("-define(E", empty);
+        Assert.Contains("-endif. %% LUBAN_TB_EMPTY_HRL", empty);
+    }
+
+    [Fact]
+    public void Erlang_Macro_ErlangDataTargetIgnoresMacroTag()
+    {
+        using var ws = new TempWorkspace();
+        LubanRunner.Run(
+            TestPaths.FixtureConf("erlang-macro"),
+            dataTargets: new[] { "erlang" },
+            outputDataDir: ws.DataDir);
+        Assert.Empty(Directory.GetFiles(ws.DataDir, "*.hrl"));
+        // 含未配置 tag 的表在内，每张表各一个数据模块
+        Assert.Equal(7, Directory.GetFiles(ws.DataDir, "*.erl").Length);
+    }
+
+    [Fact]
+    public void Erlang_Macro_ErlcCompileAndIncludeCheck()
+    {
+        string erlc = FindExecutable("erlc");
+        string erl = FindExecutable("erl");
+        if (erlc == null || erl == null)
+        {
+            // 本机未安装 Erlang 工具链时跳过编译验证
+            return;
+        }
+
+        using var ws = new TempWorkspace();
+        LubanRunner.Run(
+            TestPaths.FixtureConf("erlang-macro"),
+            dataTargets: new[] { "erlang-macro" },
+            outputDataDir: ws.DataDir);
+
+        string ebinDir = Path.Combine(ws.Root, "ebin");
+        Directory.CreateDirectory(ebinDir);
+        File.WriteAllText(Path.Combine(ws.Root, "macro_check.erl"), """
+-module(macro_check).
+-export([check/0]).
+-include("error_code.hrl").
+-include("tb_constant.hrl").
+-include("tb_text.hrl").
+-include("tb_atom.hrl").
+-include("tb_flag.hrl").
+check() ->
+    0 = ?E_OK,
+    7 = ?E_LOGIN_BAN_ROLE,
+    0.5 = ?RATIO_HALF,
+    <<"hello"/utf8>> = ?MSG_HELLO,
+    badarg = ?KIND_BADARG,
+    true = ?FLAG_ON,
+    false = ?FLAG_OFF,
+    ok.
+""");
+
+        var compile = Run(erlc, new[] { "-Werror", "-I", ws.DataDir, "-o", ebinDir, Path.Combine(ws.Root, "macro_check.erl") });
+        Assert.True(compile.ExitCode == 0, $"erlc failed:\n{compile.Stdout}\n{compile.Stderr}");
+
+        const string evalCode = """
+ok = macro_check:check(),
+io:format("erlang macro check OK~n"),
+halt(0).
+""";
+
+        var runResult = Run(erl, new[] { "-noshell", "-pa", ebinDir, "-eval", evalCode });
+        Assert.True(runResult.ExitCode == 0 && runResult.Stdout.Contains("erlang macro check OK"),
+            $"erl runtime check failed:\n{runResult.Stdout}\n{runResult.Stderr}");
+    }
+
+    [Theory]
+    [InlineData("erlang-macro/bad-macro-name", "is not a valid macro name", "'1BAD'")]
+    [InlineData("erlang-macro/bad-duplicate-name", "macro name 'E_OK' is duplicated", "record2 from")]
+    [InlineData("erlang-macro/bad-output-conflict", "erlang macro file 'shared_name.hrl' conflicts", "adjust the output parameter")]
+    [InlineData("erlang-macro/bad-value-type", "is not supported", "supported types: bool, byte, short, int, long, float, double, string")]
+    public void Erlang_Macro_InvalidConfig_Fails(string fixture, string fragment1, string fragment2)
+    {
+        var result = LubanRunner.GenerateToTemp(
+            fixture,
+            dataTargets: new[] { "erlang-macro" },
+            throwOnError: false);
+        Assert.False(result.Succeeded);
+        Assert.Contains(fragment1, result.Exception.ToString());
+        Assert.Contains(fragment2, result.Exception.ToString());
+    }
+
+    [Fact]
+    public void Erlang_MacroTagParams_Parse()
+    {
+        var full = ErlangMacroTagParams.Parse("name:code,value:id,comment:desc,output:error_code", "test context");
+        Assert.Equal("code", full.NameField);
+        Assert.Equal("id", full.ValueField);
+        Assert.False(full.ValueAsAtom);
+        Assert.Equal("desc", full.CommentField);
+        Assert.Equal("error_code", full.OutputFile);
+
+        // value 第三段 :atom 提示；comment/output 缺省为 null
+        var atom = ErlangMacroTagParams.Parse("name:name,value:val:atom", "test context");
+        Assert.Equal("val", atom.ValueField);
+        Assert.True(atom.ValueAsAtom);
+        Assert.Null(atom.CommentField);
+        Assert.Null(atom.OutputFile);
+
+        // '=' 与 ':' 分隔符混用
+        var eq = ErlangMacroTagParams.Parse("name=name,value=on", "test context");
+        Assert.Equal("name", eq.NameField);
+        Assert.Equal("on", eq.ValueField);
+
+        AssertParamError("value:id", "missing required parameter 'name'");
+        AssertParamError("name:code", "missing required parameter 'value'");
+        AssertParamError("erlang.macro", "missing required parameter 'name'");
+        AssertParamError("name:code,value:id,bogus:1", "unknown parameter 'bogus'");
+        AssertParamError("name:code,name:desc,value:id", "duplicate parameter 'name'");
+        AssertParamError("name:code,", "empty parameter");
+        AssertParamError("name:,value:id", "empty parameter");
+        AssertParamError("name:code,value:id:color", "only ':atom' is supported");
+        AssertParamError("name:code,value:id,output:a/b", "invalid erlang.macro output file name 'a/b'");
+    }
+
+    private static void AssertParamError(string tagValue, string fragment)
+    {
+        var e = Assert.Throws<LubanException>(() => ErlangMacroTagParams.Parse(tagValue, "test context"));
+        Assert.Contains(fragment, e.Message);
+    }
+
+    [Fact]
     public void Erlang_RecordFormats_Parse()
     {
         Assert.Equal(ErlangRecordFormat.FormattedRecord, ErlangRecordFormats.Parse("formatted_record", "test"));

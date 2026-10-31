@@ -1,0 +1,55 @@
+<module name="">
+    <bean name="ErrorCode" comment="错误码">
+        <var name="id" type="int" comment="错误码编号"/>
+        <var name="code" type="string" comment="宏名"/>
+        <var name="desc" type="string" comment="说明"/>
+    </bean>
+    <table name="TbErrorCode" value="ErrorCode" index="id" input="*@error_code.json"
+           tags="erlang.macro=name:code,value:id,comment:desc,output:error_code"/>
+
+    <bean name="ConstantRow" comment="常量">
+        <var name="id" type="int"/>
+        <var name="name" type="string"/>
+        <var name="ratio" type="float"/>
+    </bean>
+    <table name="TbConstant" value="ConstantRow" index="id" input="*@constant.json"
+           tags="erlang.macro=name:name,value:ratio"/>
+
+    <bean name="TextRow">
+        <var name="id" type="int"/>
+        <var name="name" type="string"/>
+        <var name="text" type="string"/>
+        <var name="note" type="string"/>
+    </bean>
+    <table name="TbText" value="TextRow" index="id" input="*@text.json"
+           tags="erlang.macro=name:name,value:text,comment:note"/>
+
+    <bean name="AtomRow">
+        <var name="id" type="int"/>
+        <var name="name" type="string"/>
+        <var name="val" type="string"/>
+    </bean>
+    <table name="TbAtom" value="AtomRow" index="id" input="*@atom.json"
+           tags="erlang.macro=name:name,value:val:atom"/>
+
+    <bean name="FlagRow">
+        <var name="id" type="int"/>
+        <var name="name" type="string"/>
+        <var name="on" type="bool"/>
+    </bean>
+    <table name="TbFlag" value="FlagRow" index="id" input="*@flag.json"
+           tags="erlang.macro=name=name,value=on"/>
+
+    <bean name="EmptyRow">
+        <var name="id" type="int"/>
+        <var name="code" type="string"/>
+    </bean>
+    <table name="TbEmpty" value="EmptyRow" index="id" input="*@empty.json"
+           tags="erlang.macro=name:code,value:id"/>
+
+    <bean name="PlainRow">
+        <var name="id" type="int"/>
+        <var name="name" type="string"/>
+    </bean>
+    <table name="TbPlain" value="PlainRow" index="id" input="*@plain.json"/>
+</module>
