@@ -1,0 +1,9 @@
+<module name="">
+    <bean name="Row">
+        <var name="id" type="int"/>
+    </bean>
+
+    <!-- 显式 output 生成的模块名与 TbRight 派生名同为 tb_right，模块名冲突 -->
+    <table name="TbLeft" value="Row" index="id" input="*@a.json" output="tb_right"/>
+    <table name="TbRight" value="Row" index="id" input="*@b.json"/>
+</module>

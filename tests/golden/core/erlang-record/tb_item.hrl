@@ -4,11 +4,11 @@
 %%     Changes to this file may cause incorrect behavior and will be lost if
 %%     the code is regenerated.
 %% </auto-generated>
--ifndef(luban_tbitem_hrl).
--define(luban_tbitem_hrl, 1).
+-ifndef(LUBAN_TB_ITEM_HRL).
+-define(LUBAN_TB_ITEM_HRL, 1).
 
--ifndef(luban_record_circle).
--define(luban_record_circle, 1).
+-ifndef(LUBAN_RECORD_CIRCLE).
+-define(LUBAN_RECORD_CIRCLE, 1).
 
 %% 圆形
 -record(circle, {
@@ -16,10 +16,10 @@
     radius :: float()  %% 半径
 }).
 
--endif. %% luban_record_circle
+-endif. %% LUBAN_RECORD_CIRCLE
 
--ifndef(luban_record_rect).
--define(luban_record_rect, 1).
+-ifndef(LUBAN_RECORD_RECT).
+-define(LUBAN_RECORD_RECT, 1).
 
 %% 矩形
 -record(rect, {
@@ -28,13 +28,13 @@
     height :: float()  %% 高度
 }).
 
--endif. %% luban_record_rect
+-endif. %% LUBAN_RECORD_RECT
 
--ifndef(luban_record_tbitem).
--define(luban_record_tbitem, 1).
+-ifndef(LUBAN_RECORD_TB_ITEM).
+-define(LUBAN_RECORD_TB_ITEM, 1).
 
 %% 道具
--record(tbitem, {
+-record(tb_item, {
     id :: integer(),                    %% 道具编号
     name :: binary(),                   %% 道具名称
     quality :: integer(),               %% 品质
@@ -45,6 +45,6 @@
     shape :: map()                      %% 形状
 }).
 
--endif. %% luban_record_tbitem
+-endif. %% LUBAN_RECORD_TB_ITEM
 
--endif. %% luban_tbitem_hrl
+-endif. %% LUBAN_TB_ITEM_HRL

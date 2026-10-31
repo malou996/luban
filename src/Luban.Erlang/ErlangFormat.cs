@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using Luban.Defs;
 using System.Text;
 
 namespace Luban.Erlang;
@@ -37,14 +36,6 @@ public static class ErlangFormat
         "case", "catch", "cond", "div", "end", "fun", "if", "let", "maybe", "else",
         "not", "of", "or", "orelse", "receive", "rem", "try", "when", "xor",
     };
-
-    /// <summary>
-    /// bean 的 record 名：FullName 中的 '.' 替换为 '_' 并转小写。
-    /// </summary>
-    public static string RecordName(DefBean bean)
-    {
-        return bean.FullName.Replace('.', '_').ToLower();
-    }
 
     /// <summary>
     /// 输出 atom 字面量。合法的非保留字小写名字直接输出，其余加单引号。
@@ -76,6 +67,40 @@ public static class ErlangFormat
             }
         }
         return !s_reservedWords.Contains(name);
+    }
+
+    /// <summary>
+    /// 输出宏名：按 erlang 惯例整体大写（如 LUBAN_TB_ITEM_HRL）。
+    /// 宏名允许大写开头（如 ?MODULE），合法字符集与 atom 相同；含其他字符时加单引号。
+    /// </summary>
+    public static string MacroName(string name)
+    {
+        string upper = name.ToUpperInvariant();
+        if (IsUnquotedMacroName(upper))
+        {
+            return upper;
+        }
+        return "'" + upper.Replace("\\", "\\\\").Replace("'", "\\'") + "'";
+    }
+
+    private static bool IsUnquotedMacroName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return false;
+        }
+        if (!(name[0] is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z')))
+        {
+            return false;
+        }
+        foreach (var c in name)
+        {
+            if (!(c is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or (>= '0' and <= '9') or '_' or '@'))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// <summary>

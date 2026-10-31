@@ -4,18 +4,18 @@
 %%     Changes to this file may cause incorrect behavior and will be lost if
 %%     the code is regenerated.
 %% </auto-generated>
--ifndef(luban_tbscore_hrl).
--define(luban_tbscore_hrl, 1).
+-ifndef(LUBAN_TB_SCORE_HRL).
+-define(LUBAN_TB_SCORE_HRL, 1).
 
--ifndef(luban_record_tbscore).
--define(luban_record_tbscore, 1).
+-ifndef(LUBAN_RECORD_TB_SCORE).
+-define(LUBAN_RECORD_TB_SCORE, 1).
 
--record(tbscore, {
+-record(tb_score, {
     uid :: integer(),    %% 用户编号
     stage :: integer(),  %% 关卡编号
     score :: integer()   %% 积分
 }).
 
--endif. %% luban_record_tbscore
+-endif. %% LUBAN_RECORD_TB_SCORE
 
--endif. %% luban_tbscore_hrl
+-endif. %% LUBAN_TB_SCORE_HRL

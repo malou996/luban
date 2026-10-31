@@ -268,6 +268,57 @@ public static class TypeUtil
         return name;
     }
 
+    /// <summary>
+    /// 转换为小写 snake_case：连续大写视为一段，大写遇小写断词，数字前断词。
+    /// 例如 TbItem→tb_item、HTTPServer→http_server、ItemID→item_id、TbItem2→tb_item_2；
+    /// 已是 snake_case 的名字保持原样。
+    /// </summary>
+    public static string ToLowerSnakeCase(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return name;
+        }
+        var sb = new StringBuilder(name.Length + 4);
+        for (int i = 0; i < name.Length; i++)
+        {
+            char c = name[i];
+            if (c == '_')
+            {
+                // 输入中的下划线原样保留（含连续下划线与开头下划线）
+                sb.Append('_');
+                continue;
+            }
+            bool needBreak = false;
+            if (i > 0)
+            {
+                char prev = name[i - 1];
+                char next = i + 1 < name.Length ? name[i + 1] : '\0';
+                if (char.IsUpper(c) && (char.IsLower(prev) || char.IsDigit(prev)))
+                {
+                    // 小写或数字之后的大写：aB → a_b、1B → 1_b
+                    needBreak = true;
+                }
+                else if (char.IsUpper(c) && char.IsUpper(prev) && next != '\0' && char.IsLower(next))
+                {
+                    // 连续大写的末尾且后面跟小写：ABc → a_bc
+                    needBreak = true;
+                }
+                else if (char.IsDigit(c) && char.IsLetter(prev))
+                {
+                    // 字母之后的数字：a2 → a_2
+                    needBreak = true;
+                }
+            }
+            if (needBreak)
+            {
+                sb.Append('_');
+            }
+            sb.Append(char.ToLowerInvariant(c));
+        }
+        return sb.ToString();
+    }
+
     public static string ToCsStyleName(string orginName)
     {
         return string.Join("", orginName.Split('_').Where(s => !string.IsNullOrWhiteSpace(s)).Select(c => UpperCaseFirstChar(c)));

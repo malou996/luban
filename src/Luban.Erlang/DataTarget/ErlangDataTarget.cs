@@ -35,6 +35,9 @@ namespace Luban.Erlang.DataTarget;
 /// map 表：get/1 按主键返回 record，未匹配返回 none，all/0 返回全部主键；
 /// list 表：有唯一索引时 get/1 按索引返回 record（多字段索引为 tuple），未匹配返回 none，all/0 返回全部索引；无索引时 all/0 返回全部记录；
 /// 单例表：get/0 返回唯一记录。
+/// 模块名、record 名、字段名由 ErlangNaming 统一推导（缺省 lower_snake，不带模块名），
+/// 配置见 erlang.codeStyle、namingConvention.erlang.*、erlang.includeModule 与 table 的 output 属性；
+/// 同名不同源的模块名在导出时报错。
 /// 表定义 tags 上的 erlang.split=N（N 为 >= 2 的整数）将表切分为 N 个数据子模块（表名_0 .. 表名_N-1）
 /// 加一个门面模块（表名）：门面按主键（或索引首字段）对 N 归一化取模路由 get/1，
 /// all/0 聚合各子模块结果；仅支持 map 表与带索引的 list 表，取模字段仅支持整型家族与 enum。
@@ -49,12 +52,19 @@ public class ErlangDataTarget : DataTargetBase
     private const string RecordFormatOption = "recordFormat";
     private const string SplitTag = "erlang.split";
 
+    // 构造时立即创建：并行的表导出任务共享同一实例做重名检测；与 erlang-record code target 同源解析
+    private readonly ErlangNaming _naming = ErlangNaming.Create();
+
+    private ErlangNaming Naming => _naming;
+
     protected override string DefaultOutputFileExt => "erl";
 
     public override OutputFile ExportTable(DefTable table, List<Record> records)
     {
-        string moduleName = table.OutputDataFile;
-        return CreateOutputFile($"{moduleName}.{OutputFileExt}", BuildDataModule(table, records, moduleName));
+        var tableNaming = Naming.ForTable(table);
+        string moduleName = tableNaming.ModuleName;
+        Naming.CheckModuleName(table, moduleName);
+        return CreateOutputFile($"{moduleName}.{OutputFileExt}", BuildDataModule(table, records, tableNaming, moduleName));
     }
 
     public override IReadOnlyList<OutputFile> ExportTableFiles(DefTable table, List<Record> records)
@@ -65,31 +75,34 @@ public class ErlangDataTarget : DataTargetBase
             return base.ExportTableFiles(table, records);
         }
         int n = splitCount.Value;
-        string moduleName = table.OutputDataFile;
+        var tableNaming = Naming.ForTable(table);
+        string moduleName = tableNaming.ModuleName;
 
         var files = new List<OutputFile>(n + 1);
-        files.Add(CreateOutputFile($"{moduleName}.{OutputFileExt}", BuildFacadeModule(table, n)));
+        Naming.CheckModuleName(table, moduleName);
+        files.Add(CreateOutputFile($"{moduleName}.{OutputFileExt}", BuildFacadeModule(table, tableNaming, n)));
         List<Record>[] shards = PartitionRecords(table, records, n);
         for (int i = 0; i < n; i++)
         {
             string subModuleName = $"{moduleName}_{i}";
-            files.Add(CreateOutputFile($"{subModuleName}.{OutputFileExt}", BuildDataModule(table, shards[i], subModuleName)));
+            Naming.CheckModuleName(table, subModuleName);
+            files.Add(CreateOutputFile($"{subModuleName}.{OutputFileExt}", BuildDataModule(table, shards[i], tableNaming, subModuleName)));
         }
         return files;
     }
 
-    private string BuildDataModule(DefTable table, List<Record> records, string moduleName)
+    private string BuildDataModule(DefTable table, List<Record> records, ErlangTableNaming tableNaming, string moduleName)
     {
         var valueBean = table.ValueTType.DefBean;
 
         // 抽象值表（多态行）没有统一的表 record，各记录按具体子类型的 record 名渲染
-        string recordName = valueBean.IsAbstractType ? null : ErlangFormat.Atom(table.OutputDataFile);
+        string recordName = valueBean.IsAbstractType ? null : ErlangFormat.Atom(tableNaming.ModuleName);
         var format = ResolveRecordFormat(table);
 
         var sb = new StringBuilder();
         sb.Append(CommonFileHeaders.AUTO_GENERATE_ERLANG);
         sb.AppendLine($"-module({ErlangFormat.Atom(moduleName)}).");
-        sb.AppendLine($"-include(\"{table.OutputDataFile}.hrl\").");
+        sb.AppendLine($"-include(\"{tableNaming.ModuleName}.hrl\").");
         sb.AppendLine();
 
         switch (table.Mode)
@@ -98,21 +111,21 @@ public class ErlangDataTarget : DataTargetBase
             {
                 sb.AppendLine("-export([get/1, all/0]).");
                 sb.AppendLine();
-                var visitor = new ToErlangLiteralVisitor(format);
+                var visitor = new ToErlangLiteralVisitor(format, tableNaming);
                 foreach (Record r in records)
                 {
                     sb.AppendLine($"get({FormatIndexKey(r, table, visitor)}) -> {visitor.ApplyTopRecord(r.Data, recordName)};");
                 }
                 sb.AppendLine("get(_) -> none.");
                 sb.AppendLine();
-                AppendAllKeys(sb, records, table, format);
+                AppendAllKeys(sb, records, table, format, tableNaming);
                 break;
             }
             case TableMode.ONE:
             {
                 sb.AppendLine("-export([get/0]).");
                 sb.AppendLine();
-                var visitor = new ToErlangLiteralVisitor(format);
+                var visitor = new ToErlangLiteralVisitor(format, tableNaming);
                 sb.AppendLine($"get() -> {visitor.ApplyTopRecord(records[0].Data, recordName)}.");
                 break;
             }
@@ -122,19 +135,19 @@ public class ErlangDataTarget : DataTargetBase
                 {
                     sb.AppendLine("-export([all/0]).");
                     sb.AppendLine();
-                    AppendAllRecords(sb, records, recordName, format);
+                    AppendAllRecords(sb, records, recordName, format, tableNaming);
                     break;
                 }
                 sb.AppendLine("-export([get/1, all/0]).");
                 sb.AppendLine();
-                var visitor = new ToErlangLiteralVisitor(format);
+                var visitor = new ToErlangLiteralVisitor(format, tableNaming);
                 foreach (Record r in records)
                 {
                     sb.AppendLine($"get({FormatIndexKey(r, table, visitor)}) -> {visitor.ApplyTopRecord(r.Data, recordName)};");
                 }
                 sb.AppendLine("get(_) -> none.");
                 sb.AppendLine();
-                AppendAllKeys(sb, records, table, format);
+                AppendAllKeys(sb, records, table, format, tableNaming);
                 break;
             }
             default:
@@ -188,9 +201,9 @@ public class ErlangDataTarget : DataTargetBase
     /// <summary>
     /// 生成门面模块：get/1 按主键（或索引首字段）对 N 归一化取模路由到子模块，all/0 聚合各子模块结果。
     /// </summary>
-    private string BuildFacadeModule(DefTable table, int splitCount)
+    private string BuildFacadeModule(DefTable table, ErlangTableNaming tableNaming, int splitCount)
     {
-        string moduleName = table.OutputDataFile;
+        string moduleName = tableNaming.ModuleName;
         // 多字段索引的 get/1 参数为 tuple，取模字段用 element/2 取首字段
         bool tupleKey = table.IndexList.Count > 1;
         string modExpr = tupleKey ? "element(1, Key)" : "Key";
@@ -254,18 +267,18 @@ public class ErlangDataTarget : DataTargetBase
         return keyValues.Count() == 1 ? keyValues.First() : $"{{{string.Join(", ", keyValues)}}}";
     }
 
-    private static void AppendAllKeys(StringBuilder sb, List<Record> records, DefTable table, ErlangRecordFormat format)
+    private static void AppendAllKeys(StringBuilder sb, List<Record> records, DefTable table, ErlangRecordFormat format, ErlangTableNaming tableNaming)
     {
-        var visitor = new ToErlangLiteralVisitor(format);
+        var visitor = new ToErlangLiteralVisitor(format, tableNaming);
         var keys = records.Select(r => FormatIndexKey(r, table, visitor));
         sb.AppendLine("all() ->");
         sb.AppendLine($"    [{string.Join(", ", keys)}].");
     }
 
-    private static void AppendAllRecords(StringBuilder sb, List<Record> records, string recordName, ErlangRecordFormat format)
+    private static void AppendAllRecords(StringBuilder sb, List<Record> records, string recordName, ErlangRecordFormat format, ErlangTableNaming tableNaming)
     {
         sb.AppendLine("all() ->");
-        var visitor = new ToErlangLiteralVisitor(format);
+        var visitor = new ToErlangLiteralVisitor(format, tableNaming);
         var items = records.Select(r => visitor.ApplyTopRecord(r.Data, recordName, format == ErlangRecordFormat.FormattedRecord ? 4 : 0)).ToList();
         sb.AppendLine(format == ErlangRecordFormat.FormattedRecord
             ? $"    [{string.Join(",\n    ", items)}]."

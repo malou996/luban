@@ -32,6 +32,11 @@ gen core "core/erlang" -d erlang \
   -c erlang-record \
   -x "outputCodeDir=$GOLDEN/core/erlang-record"
 
+# erlang-naming: lower_snake 命名、includeModule 与显式 output 用例
+gen erlang-naming "erlang-naming/erlang" -d erlang \
+  -c erlang-record \
+  -x "outputCodeDir=$GOLDEN/erlang-naming/erlang-record"
+
 TEXTS="$FIXTURES/l10n/Data/texts.json"
 gen l10n "l10n/default" -d json -d text-list \
   -x "l10n.provider=default" \

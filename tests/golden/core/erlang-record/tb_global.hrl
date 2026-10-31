@@ -4,18 +4,18 @@
 %%     Changes to this file may cause incorrect behavior and will be lost if
 %%     the code is regenerated.
 %% </auto-generated>
--ifndef(luban_tbglobal_hrl).
--define(luban_tbglobal_hrl, 1).
+-ifndef(LUBAN_TB_GLOBAL_HRL).
+-define(LUBAN_TB_GLOBAL_HRL, 1).
 
--ifndef(luban_record_tbglobal).
--define(luban_record_tbglobal, 1).
+-ifndef(LUBAN_RECORD_TB_GLOBAL).
+-define(LUBAN_RECORD_TB_GLOBAL, 1).
 
 %% 全局配置
--record(tbglobal, {
+-record(tb_global, {
     version :: integer(),  %% 版本号
     title :: binary()
 }).
 
--endif. %% luban_record_tbglobal
+-endif. %% LUBAN_RECORD_TB_GLOBAL
 
--endif. %% luban_tbglobal_hrl
+-endif. %% LUBAN_TB_GLOBAL_HRL

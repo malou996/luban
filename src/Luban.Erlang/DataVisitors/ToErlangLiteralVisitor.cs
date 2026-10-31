@@ -32,6 +32,7 @@ namespace Luban.Erlang.DataVisitors;
 /// formatted_record：record 多行缩进排版，嵌套 record 递归展开，list、map（含抽象 bean 的 map）保持单行；
 /// compact_record：record 单行紧凑字面量；
 /// compact_tuple：具体 bean 渲染为 {record名, 各字段值...}，嵌套具体 bean 递归转换，抽象 bean 仍为带类型 tag 的 map。
+/// record 名与字段名经 tableNaming 转换，与 .hrl 头文件保持一致。
 /// 每个 ExportTable 调用使用独立实例（TopRecordName 有状态）。
 /// </summary>
 public class ToErlangLiteralVisitor : ToLiteralVisitorBase
@@ -46,15 +47,18 @@ public class ToErlangLiteralVisitor : ToLiteralVisitorBase
 
     private readonly ErlangRecordFormat _format;
 
+    private readonly ErlangTableNaming _naming;
+
     // formatted_record 模式下当前 record 起始行的缩进空格数
     private int _indent;
 
     // list、map 内部的 record 保持单行渲染
     private int _inlineDepth;
 
-    public ToErlangLiteralVisitor(ErlangRecordFormat format)
+    public ToErlangLiteralVisitor(ErlangRecordFormat format, ErlangTableNaming naming)
     {
         _format = format;
+        _naming = naming;
     }
 
     /// <summary>
@@ -100,7 +104,7 @@ public class ToErlangLiteralVisitor : ToLiteralVisitorBase
         {
             var x = new StringBuilder();
             x.Append("#{").Append(ErlangFormat.Atom(FieldNames.ErlangTypeNameKey)).Append(" => ")
-                .Append(ErlangFormat.Atom(ErlangFormat.RecordName(type.ImplType)));
+                .Append(ErlangFormat.Atom(_naming.RecordName(type.ImplType)));
             int index = 0;
             _inlineDepth++;
             try
@@ -112,7 +116,7 @@ public class ToErlangLiteralVisitor : ToLiteralVisitorBase
                     {
                         continue;
                     }
-                    x.Append(", ").Append(ErlangFormat.Atom(defField.Name)).Append(" => ").Append(f.Apply(this));
+                    x.Append(", ").Append(ErlangFormat.Atom(_naming.FieldName(defField.Name))).Append(" => ").Append(f.Apply(this));
                 }
             }
             finally
@@ -123,7 +127,7 @@ public class ToErlangLiteralVisitor : ToLiteralVisitorBase
             return x.ToString();
         }
 
-        string recordName = _topRecordName ?? ErlangFormat.Atom(ErlangFormat.RecordName(type.ImplType));
+        string recordName = _topRecordName ?? ErlangFormat.Atom(_naming.RecordName(type.ImplType));
         _topRecordName = null;
         _topForceRecord = false;
 
@@ -182,7 +186,7 @@ public class ToErlangLiteralVisitor : ToLiteralVisitorBase
                 sb.Append(", ");
             }
             first = false;
-            sb.Append(ErlangFormat.Atom(defField.Name)).Append(" = ").Append(f.Apply(this));
+            sb.Append(ErlangFormat.Atom(_naming.FieldName(defField.Name))).Append(" = ").Append(f.Apply(this));
         }
     }
 
@@ -203,7 +207,7 @@ public class ToErlangLiteralVisitor : ToLiteralVisitorBase
             }
             sb.Append(fieldCount > 0 ? ",\n" : "\n");
             sb.Append(' ', _indent + IndentSize)
-                .Append(ErlangFormat.Atom(defField.Name)).Append(" = ");
+                .Append(ErlangFormat.Atom(_naming.FieldName(defField.Name))).Append(" = ");
             int savedIndent = _indent;
             _indent += IndentSize;
             sb.Append(f.Apply(this));

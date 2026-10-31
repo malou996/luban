@@ -1,0 +1,23 @@
+<module name="cfg.item">
+    <bean name="Bonus">
+        <var name="gold" type="int"/>
+    </bean>
+
+    <bean name="RewardItem">
+        <var name="itemId" type="int"/>
+        <var name="count" type="int"/>
+        <var name="bonus" type="Bonus"/>
+    </bean>
+
+    <bean name="HTTPServerInfo">
+        <var name="startTime" type="int"/>
+        <var name="ItemID" type="int"/>
+    </bean>
+
+    <!-- 默认不带模块名：tb_reward.erl / tb_reward.hrl，record 名 bonus / tb_reward -->
+    <table name="TbReward" value="RewardItem" index="itemId" input="*@reward.json"/>
+    <!-- tags 开启模块名：cfg_item_tb_named.erl / .hrl，record 名 cfg_item_http_server_info -->
+    <table name="TbNamed" value="HTTPServerInfo" index="ItemID" input="*@named.json" tags="erlang.includeModule=true"/>
+    <!-- 显式 output 原样优先：my_table.erl / my_table.hrl，不受 includeModule 影响 -->
+    <table name="TbCustom" value="RewardItem" index="itemId" input="*@custom.json" output="my_table"/>
+</module>

@@ -4,12 +4,12 @@
 %%     Changes to this file may cause incorrect behavior and will be lost if
 %%     the code is regenerated.
 %% </auto-generated>
--module(tbitem).
--include("tbitem.hrl").
+-module(tb_item).
+-include("tb_item.hrl").
 
 -export([get/1, all/0]).
 
-get(1) -> #tbitem{
+get(1) -> #tb_item{
     id = 1,
     name = <<"sword"/utf8>>,
     quality = 1,
@@ -18,7 +18,7 @@ get(1) -> #tbitem{
     flags = [1, 2],
     shape = #{'__type__' => circle, id => 10, radius => 1.5}
 };
-get(2) -> #tbitem{
+get(2) -> #tb_item{
     id = 2,
     name = <<"shield"/utf8>>,
     quality = 2,

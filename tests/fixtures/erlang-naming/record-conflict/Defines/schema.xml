@@ -1,0 +1,26 @@
+<module name="">
+    <bean name="Reward">
+        <var name="id" type="int"/>
+    </bean>
+
+    <bean name="Row">
+        <var name="id" type="int"/>
+        <var name="bonus" type="Reward"/>
+    </bean>
+
+    <table name="TbMain" value="Row" index="id" input="*@a.json"/>
+
+    <module name="other">
+        <bean name="Reward">
+            <var name="id" type="int"/>
+        </bean>
+
+        <bean name="Row2">
+            <var name="id" type="int"/>
+            <var name="bonus" type="Reward"/>
+        </bean>
+
+        <!-- 默认不含模块名时与外层 Reward 的 record 名同为 reward，record 名冲突 -->
+        <table name="TbOther" value="Row2" index="id" input="*@b.json"/>
+    </module>
+</module>

@@ -20,6 +20,9 @@
   "error.erlang.invalid_split_count": "非法的 erlang.split 取值 '{1}'（表:'{0}'），必须为 >= 2 的整数",
   "error.erlang.split_unsupported_mode": "表:'{0}' mode:'{1}' 不支持 erlang.split，仅支持 map 表与带索引的 list 表",
   "error.erlang.split_unsupported_key_type": "表:'{0}' 的取模字段:'{1}' 类型:'{2}' 不支持 erlang.split，仅支持整型家族与 enum",
+  "error.erlang.invalid_include_module": "非法的 erlang.includeModule 取值 '{1}'（{0}），必须为 true/false",
+  "error.erlang.module_name_conflict": "erlang 模块名 '{0}' 冲突：'{1}' 与 '{2}' 生成同名模块，请调整表名、erlang.includeModule 或 output 配置",
+  "error.erlang.record_name_conflict": "erlang record 名 '{0}' 冲突：'{1}' 与 '{2}' 生成同名 record，请调整命名或 erlang.includeModule 配置",
 
   "error.internal.unexpected": "未预期的错误",
   "error.internal.not_possible": "不可能的情况",

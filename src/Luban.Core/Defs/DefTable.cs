@@ -95,6 +95,9 @@ public class DefTable : DefTypeBase
 
     public string OutputDataFile => string.IsNullOrWhiteSpace(_outputFile) ? FullName.Replace('.', '_').ToLower() : _outputFile;
 
+    /// <summary>schema 中显式指定的 output 文件名；未指定时为 null。显式指定时调用方直接原样使用。</summary>
+    public string ExplicitOutputFile => string.IsNullOrWhiteSpace(_outputFile) ? null : _outputFile;
+
     public override void Compile()
     {
         var ass = Assembly;

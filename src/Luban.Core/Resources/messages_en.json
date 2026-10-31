@@ -20,6 +20,9 @@
   "error.erlang.invalid_split_count": "invalid erlang.split value '{1}' for table '{0}', must be an integer >= 2",
   "error.erlang.split_unsupported_mode": "table '{0}' mode '{1}' does not support erlang.split, only map tables and list tables with index are supported",
   "error.erlang.split_unsupported_key_type": "table '{0}' mod field '{1}' type '{2}' does not support erlang.split, only integer types and enum are supported",
+  "error.erlang.invalid_include_module": "invalid erlang.includeModule value '{1}' for {0}, must be true/false",
+  "error.erlang.module_name_conflict": "erlang module name '{0}' conflicts: '{1}' and '{2}' produce the same module name, adjust table names, erlang.includeModule or output",
+  "error.erlang.record_name_conflict": "erlang record name '{0}' conflicts: '{1}' and '{2}' produce the same record name, adjust names or erlang.includeModule",
 
   "error.internal.unexpected": "unexpected error",
   "error.internal.not_possible": "not possible",

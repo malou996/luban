@@ -1,0 +1,4 @@
+[
+  { "itemId": 1, "count": 10, "bonus": { "gold": 5 } },
+  { "itemId": 2, "count": 20, "bonus": { "gold": 6 } }
+]

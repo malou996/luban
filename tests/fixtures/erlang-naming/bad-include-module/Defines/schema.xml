@@ -1,0 +1,7 @@
+<module name="">
+    <bean name="Row">
+        <var name="id" type="int"/>
+    </bean>
+
+    <table name="TbBad" value="Row" index="id" input="*@a.json" tags="erlang.includeModule=maybe"/>
+</module>

@@ -282,3 +282,6 @@ tests/**/test-out/
 
 #codegraph
 .codegraph/
+
+# 中间结果
+.scratch/

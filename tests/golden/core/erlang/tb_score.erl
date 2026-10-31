@@ -4,14 +4,14 @@
 %%     Changes to this file may cause incorrect behavior and will be lost if
 %%     the code is regenerated.
 %% </auto-generated>
--module(tbscore).
--include("tbscore.hrl").
+-module(tb_score).
+-include("tb_score.hrl").
 
 -export([get/1, all/0]).
 
-get({1, 1}) -> #tbscore{uid = 1, stage = 1, score = 100};
-get({1, 2}) -> #tbscore{uid = 1, stage = 2, score = 200};
-get({2, 1}) -> #tbscore{uid = 2, stage = 1, score = 150};
+get({1, 1}) -> #tb_score{uid = 1, stage = 1, score = 100};
+get({1, 2}) -> #tb_score{uid = 1, stage = 2, score = 200};
+get({2, 1}) -> #tb_score{uid = 2, stage = 1, score = 150};
 get(_) -> none.
 
 all() ->

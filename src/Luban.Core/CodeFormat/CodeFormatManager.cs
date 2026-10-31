@@ -52,6 +52,8 @@ public class CodeFormatManager
 
     public ICodeStyle DartDefaultCodeStyle { get; private set; }
 
+    public ICodeStyle ErlangDefaultCodeStyle { get; private set; }
+
     public void Init()
     {
     }
@@ -67,6 +69,8 @@ public class CodeFormatManager
         CppDefaultCodeStyle = RegisterCodeStyle("cpp-default", "snake", "pascal", "pascal", "pascal", "camel", "none");
         PythonDefaultCodeStyle = RegisterCodeStyle("python-default", "snake", "pascal", "snake", "snake", "snake", "none");
         DartDefaultCodeStyle = RegisterCodeStyle("dart-default", "pascal", "pascal", "camel", "camel", "camel", "none");
+        // erlang 无命名空间概念，namespace 维度专用于 includeModule 拼接时转换模块名
+        ErlangDefaultCodeStyle = RegisterCodeStyle("erlang-default", "lower_snake", "lower_snake", "lower_snake", "lower_snake", "lower_snake", "lower_snake");
     }
 
     public INamingConventionFormatter CreateFormatter(string formatterName)

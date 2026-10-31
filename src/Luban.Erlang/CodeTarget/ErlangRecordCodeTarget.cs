@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using Luban.CodeFormat;
 using Luban.CodeTarget;
 using Luban.Defs;
+using Luban.Schema;
 using Luban.Types;
 using System.Text;
 
@@ -28,6 +30,8 @@ namespace Luban.Erlang.CodeTarget;
 /// <summary>
 /// 每张表生成一个 .hrl 头文件，包含表记录与全部嵌套 bean 的 record 定义。
 /// 文件与 record 均带 include guard，可被多次 include 或与其他表的 .hrl 共存。
+/// 文件名、record 名、字段名由 ErlangNaming 统一推导（缺省 lower_snake，不带模块名），
+/// 配置见 erlang.codeStyle、namingConvention.erlang.*、erlang.includeModule 与 table 的 output 属性。
 /// </summary>
 [CodeTarget("erlang-record")]
 public class ErlangRecordCodeTarget : CodeTargetBase
@@ -41,12 +45,23 @@ public class ErlangRecordCodeTarget : CodeTargetBase
 
     protected override string FileSuffixName => "hrl";
 
+    protected override ICodeStyle DefaultCodeStyle => CodeFormatManager.Ins.ErlangDefaultCodeStyle;
+
+    // style 配置统一挂在 erlang family，与 erlang data target 共用同一解析
+    protected override string StyleOptionFamily => "erlang";
+
+    // 构造时立即创建：并行的表生成任务共享同一实例做重名检测
+    private readonly ErlangNaming _naming = ErlangNaming.Create();
+
+    private ErlangNaming Naming => _naming;
+
     public override void Handle(GenerationContext ctx, OutputFileManifest manifest)
     {
         var tasks = ctx.ExportTables.Select(table => Task.Run(() =>
         {
-            string content = new HeaderFileGenerator(table).Generate();
-            return CreateOutputFile($"{table.OutputDataFile}.hrl", content);
+            var tableNaming = Naming.ForTable(table);
+            string content = new HeaderFileGenerator(tableNaming).Generate();
+            return CreateOutputFile($"{tableNaming.ModuleName}.hrl", content);
         })).ToArray();
         Task.WaitAll(tasks);
         foreach (var task in tasks)
@@ -80,7 +95,7 @@ public class ErlangRecordCodeTarget : CodeTargetBase
     /// </summary>
     private class HeaderFileGenerator
     {
-        private readonly DefTable _table;
+        private readonly ErlangTableNaming _naming;
 
         private readonly HashSet<DefBean> _visited = new();
 
@@ -89,14 +104,14 @@ public class ErlangRecordCodeTarget : CodeTargetBase
 
         private readonly List<string> _recordBlocks = new();
 
-        public HeaderFileGenerator(DefTable table)
+        public HeaderFileGenerator(ErlangTableNaming naming)
         {
-            _table = table;
+            _naming = naming;
         }
 
         public string Generate()
         {
-            var valueBean = _table.ValueTType.DefBean;
+            var valueBean = _naming.Table.ValueTType.DefBean;
 
             if (valueBean.IsAbstractType)
             {
@@ -112,11 +127,10 @@ public class ErlangRecordCodeTarget : CodeTargetBase
                 {
                     CollectFromType(field.CType);
                 }
-                _recordBlocks.Add(GenRecordBlock(_table.OutputDataFile, valueBean, new HashSet<DefBean>()));
+                _recordBlocks.Add(GenRecordBlock(_naming.ModuleName, _naming.Table.FullName, _naming.Table.Source, valueBean, new HashSet<DefBean>()));
             }
 
-            string moduleName = _table.OutputDataFile;
-            string fileGuard = ErlangFormat.Atom($"luban_{moduleName}_hrl");
+            string fileGuard = ErlangFormat.MacroName($"luban_{_naming.ModuleName}_hrl");
             var sb = new StringBuilder();
             sb.Append(CommonFileHeaders.AUTO_GENERATE_ERLANG);
             sb.AppendLine($"-ifndef({fileGuard}).");
@@ -180,13 +194,14 @@ public class ErlangRecordCodeTarget : CodeTargetBase
             }
             _visiting.Remove(bean);
             _visited.Add(bean);
-            _recordBlocks.Add(GenRecordBlock(ErlangFormat.RecordName(bean), bean, new HashSet<DefBean>(_visiting)));
+            _recordBlocks.Add(GenRecordBlock(_naming.RecordName(bean), bean.FullName, bean.Source, bean, new HashSet<DefBean>(_visiting)));
         }
 
-        private string GenRecordBlock(string rawRecordName, DefBean bean, HashSet<DefBean> inProgress)
+        private string GenRecordBlock(string rawRecordName, string ownerFullName, SchemaSource source, DefBean bean, HashSet<DefBean> inProgress)
         {
+            _naming.Naming.CheckRecordName(source, rawRecordName, ownerFullName);
             var fields = bean.HierarchyExportFields
-                .Select(f => (Def: $"    {ErlangFormat.Atom(f.Name)} :: {TypeAnnotation(f.CType, inProgress)}", Comment: f.Comment))
+                .Select(f => (Def: $"    {ErlangFormat.Atom(_naming.FieldName(f.Name))} :: {TypeAnnotation(f.CType, inProgress)}", Comment: f.Comment))
                 .ToList();
             // 字段注释的 %% 对齐列：最长字段定义行（含行尾逗号）之后留 2 个空格
             int commentColumn = fields.Count == 0 ? 0
@@ -209,7 +224,7 @@ public class ErlangRecordCodeTarget : CodeTargetBase
                     fieldLines.Add(continuationIndent + CommentText(part));
                 }
             }
-            string guard = ErlangFormat.Atom($"luban_record_{rawRecordName}");
+            string guard = ErlangFormat.MacroName($"luban_record_{rawRecordName}");
             var sb = new StringBuilder();
             sb.AppendLine($"-ifndef({guard}).");
             sb.AppendLine($"-define({guard}, 1).");
@@ -243,7 +258,7 @@ public class ErlangRecordCodeTarget : CodeTargetBase
                 .ToList();
         }
 
-        private static string TypeAnnotation(TType type, HashSet<DefBean> inProgress)
+        private string TypeAnnotation(TType type, HashSet<DefBean> inProgress)
         {
             string core = type switch
             {
@@ -256,7 +271,7 @@ public class ErlangRecordCodeTarget : CodeTargetBase
                     ? "map()"
                     : inProgress.Contains(bean.DefBean)
                         ? "any()"
-                        : $"#{ErlangFormat.Atom(ErlangFormat.RecordName(bean.DefBean))}{{}}",
+                        : $"#{ErlangFormat.Atom(_naming.RecordName(bean.DefBean))}{{}}",
                 TMap map => $"#{{{TypeAnnotation(map.KeyType, inProgress)} := {TypeAnnotation(map.ValueType, inProgress)}}}",
                 TArray or TList or TSet => $"[{TypeAnnotation(type.ElementType, inProgress)}]",
                 _ => throw new NotSupportedException($"erlang-record target: unsupported type {type.GetType().Name}"),

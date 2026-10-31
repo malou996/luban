@@ -4,9 +4,9 @@
 %%     Changes to this file may cause incorrect behavior and will be lost if
 %%     the code is regenerated.
 %% </auto-generated>
--module(tbglobal).
--include("tbglobal.hrl").
+-module(tb_global).
+-include("tb_global.hrl").
 
 -export([get/0]).
 
-get() -> {tbglobal, 3, <<"demo"/utf8>>}.
+get() -> {tb_global, 3, <<"demo"/utf8>>}.
